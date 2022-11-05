@@ -1,47 +1,52 @@
 import { galleryItems } from "./gallery-items.js";
 // Change code below this line
 
-console.log(galleryItems);
+const galleryContainer = document.querySelector(".gallery");
+const galleryMarkup = createGalleryMarkup(galleryItems);
+let instance;
 
-const gallery = document.querySelector(".gallery");
-const items = [];
+galleryContainer.insertAdjacentHTML("beforeend", galleryMarkup);
 
-galleryItems.forEach((element) => {
-	const galleryItem = document.createElement("div");
-	galleryItem.className = "gallery__item";
-	const galleryLink = document.createElement("a");
-	galleryLink.className = "gallery__link";
-	galleryLink.href = element.original;
-	const galleryImage = document.createElement("img");
-	galleryImage.className = "gallery__image";
-	galleryImage.src = element.preview;
-	galleryImage.setAttribute("data-source", element.original);
-	galleryImage.alt = element.description;
+galleryContainer.addEventListener("click", ClickOnContainer);
 
-	galleryItem.append(galleryLink);
-	galleryLink.append(galleryImage);
-	items.push(galleryItem);
-});
+function createGalleryMarkup() {
+	return galleryItems
+		.map(({ preview, original, description }) => {
+			return `<div class="gallery__item">
+      <a class="gallery__link" href="${original}">
+        <img
+          class="gallery__image"
+          src="${preview}"
+          data-source="${original}"
+          alt="${description}"
+        />
+      </a>
+    </div>`;
+		})
+		.join("");
+}
 
-gallery.append(...items);
-
-gallery.addEventListener("click", (e) => {
+function ClickOnContainer(e) {
 	e.preventDefault();
-	if (e.target.nodeName !== "IMG") {
-		return;
+
+	if (e.target.classList.contains("gallery__image")) {
+		const source = event.target.dataset.source;
+
+		instance = basicLightbox.create(
+			`
+    <img src="${source}"width="800" height="600">`,
+			{
+				onShow: () => galleryContainer.addEventListener("keydown", onEscClose),
+				onClose: () =>
+					galleryContainer.removeEventListener("keydown", onEscClose),
+			}
+		);
+		instance.show();
 	}
+}
 
-	const selectedImage = e.target.getAttribute("data-source");
-
-	const instance = basicLightbox.create(`
-    <img src="${selectedImage}" width="800" height="600">
-`);
-
-	instance.show();
-
-	gallery.addEventListener("keydown", (e) => {
-		if (e.key === "Escape") {
-			instance.close();
-		}
-	});
-});
+function onEscClose(e) {
+	if (e.code === "Escape") {
+		instance.close();
+	}
+}
